@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState , useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import axiosInstance from '../../api/axios';
@@ -6,7 +6,7 @@ import {
   Box, Card, CardContent, Typography,
   Button, Tabs, Tab, Chip, Avatar,
   TextField, Alert, CircularProgress,
-  Divider, Dialog, DialogTitle,
+  Dialog, DialogTitle,
   DialogContent, DialogActions,
   FormControl,
   InputLabel,
@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 
 const JournalCard = ({ journal, currentUser, onAssign, onReview }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const statusMap = {
@@ -173,26 +173,27 @@ const SubmitDialog = ({ open, onClose, onSubmit }) => {
 };
 
 const AssignDialog = ({ open, journal, onClose, onAssign }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
-  const textDir = i18n.language === 'ar' ? 'rtl' : 'ltr';
 
-  useEffect(() => {
-    if (open) fetchUsers();
-  }, [open]);
+  
+  const fetchUsers = useCallback(async () => {
+  try {
+    const { data } = await axiosInstance.get('/admin/users');
+    setUsers(data.data?.filter(u =>
+      u.id !== journal?.user_id && u.role !== 'admin'
+    ) || []);
+  } catch (err) {
+    console.error(err);
+  }
+}, [journal?.user_id]);
 
-  const fetchUsers = async () => {
-    try {
-      const { data } = await axiosInstance.get('/admin/users');
-      setUsers(
-        data.data?.filter((u) => u.id !== journal?.user_id && u.role !== 'admin') || [],
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
+useEffect(() => {
+  if (open) fetchUsers();
+}, [open, fetchUsers]);
+
 
   const handleAssign = async () => {
     if (selected.length === 0) return;

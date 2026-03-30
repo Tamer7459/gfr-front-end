@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState , useCallback } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -136,24 +136,26 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ myPosts: 0, total: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
 
-  const fetchData = async () => {
-    try {
-      const { data } = await axiosInstance.get('/posts');
-      setPosts(data.data?.slice(0, 4) || []);
-      setStats({
-        total: data.total || 0,
-        myPosts: data.data?.filter((p) => p.user_id === user?.id).length || 0,
-      });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+  const fetchData = useCallback(async () => {
+  try {
+    const { data } = await axiosInstance.get('/posts');
+    setPosts(data.data?.slice(0, 4) || []);
+    setStats({
+      total:   data.total   || 0,
+      myPosts: data.data?.filter(p => p.user_id === user?.id).length || 0,
+    });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [user?.id]);
+
+  useEffect(() => {
+  fetchData();
+}, [fetchData]);
 
   const gradPrimary = (th) => `linear-gradient(135deg, ${th.palette.primary.light}, ${th.palette.primary.dark})`;
   const gradSecondary = (th) => `linear-gradient(135deg, ${th.palette.secondary.light}, ${th.palette.secondary.dark})`;

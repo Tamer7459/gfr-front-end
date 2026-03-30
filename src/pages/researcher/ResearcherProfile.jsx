@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState , useCallback } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../../api/axios';
@@ -21,21 +21,23 @@ const ResearcherProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [id]);
+  
 
-  const fetchProfile = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axiosInstance.get(`/users/${id}/profile`);
-      setProfile(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchProfile = useCallback(async () => {
+  setLoading(true);
+  try {
+    const { data } = await axiosInstance.get(`/users/${id}/profile`);
+    setProfile(data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [id]);
+
+useEffect(() => {
+  fetchProfile();
+}, [fetchProfile]);
 
   if (loading)
     return (

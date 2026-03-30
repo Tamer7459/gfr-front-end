@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState , useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -164,22 +164,22 @@ const PostsList = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [page]);
+  const fetchPosts = useCallback(async () => {
+  setLoading(true);
+  try {
+    const { data } = await axiosInstance.get(`/posts?page=${page}`);
+    setPosts(data.data   || []);
+    setTotal(data.last_page || 1);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [page]);
 
-  const fetchPosts = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axiosInstance.get(`/posts?page=${page}`);
-      setPosts(data.data || []);
-      setTotal(data.last_page || 1);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+  fetchPosts();
+}, [fetchPosts]);
 
   const handleLike = async (postId) => {
     try {

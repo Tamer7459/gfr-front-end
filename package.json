@@ -31,6 +31,9 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build"
   },
+  "devDependencies": {
+    "source-map-loader": "^4.0.0"
+  },
   "homepage": "https://Tamer7459.github.io/gfr-front-end",
   "eslintConfig": {
     "extends": [
@@ -49,8 +52,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "typescript": "^4.9.5"
   }
 }
