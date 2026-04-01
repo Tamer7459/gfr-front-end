@@ -33,10 +33,12 @@ function AppShell() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <>
     <SpeedInsights />
+    <BrowserRouter>
       <AppShell />
     </BrowserRouter>
+    </>
   );
 }
 
