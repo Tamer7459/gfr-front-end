@@ -1,408 +1,502 @@
-import { useState, useMemo } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
+import { useEffect, useState } from 'react'
+import { useNavigate, Link as RouterLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
+import { useThemeContext } from '../../context/ThemeContext'
+import axiosInstance from '../../api/axios'
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  IconButton,
-  Avatar,
-  Menu,
-  MenuItem,
-  Divider,
-  Tooltip,
-  Badge,
-  Button,
-  ListItemIcon,
-  ListItemText,
-  Drawer,
-  List,
-  ListItemButton,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+    AppBar,
+    Toolbar,
+    Typography,
+    Box,
+    IconButton,
+    Avatar,
+    Menu,
+    MenuItem,
+    Divider,
+    Tooltip,
+    Badge,
+    Button,
+    ListItemIcon,
+    ListItemText,
+    Switch
+} from '@mui/material'
 import {
-  School,
-  Dashboard,
-  Article,
-  Add,
-  AdminPanelSettings,
-  Logout,
-  Person,
-  Message,
-  Notifications,
-  MenuBook,
-  Event,
-  Menu as MenuIcon,
-  Translate,
-} from '@mui/icons-material';
+    School,
+    Dashboard,
+    Article,
+    Add,
+    AdminPanelSettings,
+    Logout,
+    Person,
+    Message,
+    Notifications,
+    DarkMode,
+    LightMode,
+    MenuBook,
+    Event,
+    Translate
+} from '@mui/icons-material'
 
 const Navbar = () => {
-  const theme = useTheme();
-  const { t, i18n } = useTranslation();
-  const downMd = useMediaQuery(theme.breakpoints.down('md'));
-  const { user, logout, isAdmin } = useAuth();
-  const navigate = useNavigate();
+    const { user, logout, isAdmin } = useAuth()
+    const { t, i18n } = useTranslation()
+    const { mode, toggleTheme } = useThemeContext()
+    const navigate = useNavigate()
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [langAnchor, setLangAnchor] = useState(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const open = Boolean(anchorEl);
+    const [anchorEl, setAnchorEl] = useState(null)
+    const [langAnchor, setLangAnchor] = useState(null)
+    const [notificationAnchor, setNotificationAnchor] = useState(null)
+    const [notifications, setNotifications] = useState([])
+    const [unreadCount, setUnreadCount] = useState(0)
+    const open = Boolean(anchorEl)
+    const notificationOpen = Boolean(notificationAnchor)
 
-  const drawerAnchor = theme.direction === 'rtl' ? 'right' : 'left';
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const { data } = await axiosInstance.get('/messages')
+                const unreadNotifications = (data || [])
+                    .filter(conv => (conv.unread_count || 0) > 0)
+                    .sort(
+                        (left, right) =>
+                            new Date(right.last_time || 0) -
+                            new Date(left.last_time || 0)
+                    )
 
-  const handleLogout = async () => {
-    setAnchorEl(null);
-    setMobileOpen(false);
-    await logout();
-    navigate('/login');
-  };
+                setNotifications(unreadNotifications)
+                setUnreadCount(
+                    unreadNotifications.reduce(
+                        (sum, conv) => sum + (conv.unread_count || 0),
+                        0
+                    )
+                )
+            } catch {
+                setUnreadCount(0)
+                setNotifications([])
+            }
+        }
 
-  const avatarLetter = user?.name?.charAt(0)?.toUpperCase() || 'U';
+        fetchNotifications()
+        const intervalId = setInterval(fetchNotifications, 10000)
 
-  const navLinks = useMemo(
-    () => [
-      { label: t('nav.home'), icon: <Dashboard fontSize="small" />, path: '/dashboard' },
-      { label: t('nav.research'), icon: <Article fontSize="small" />, path: '/posts' },
-      { label: t('nav.publishResearch'), icon: <Add fontSize="small" />, path: '/posts/create' },
-      { label: t('nav.journals'), icon: <MenuBook fontSize="small" />, path: '/journals' },
-      { label: t('nav.conferences'), icon: <Event fontSize="small" />, path: '/conferences' },
-    ],
-    [t],
-  );
+        return () => clearInterval(intervalId)
+    }, [])
 
-  const closeMobile = () => setMobileOpen(false);
+    const openConversationFromNotification = conv => {
+        setNotificationAnchor(null)
+        navigate('/messages', {
+            state: { targetUser: conv.user }
+        })
+    }
 
-  const menuPaperSx = {
-    width: 240,
-    borderRadius: 2,
-    mt: 1,
-    border: '1px solid',
-    borderColor: 'divider',
-    boxShadow: '0 12px 40px rgba(15, 23, 42, 0.12)',
-  };
+    const handleLogout = async () => {
+        setAnchorEl(null)
+        await logout()
+        navigate('/login')
+    }
 
-  return (
-    <>
-      <AppBar position="sticky" elevation={0} color="transparent">
-        <Toolbar
-          sx={{
-            justifyContent: 'space-between',
-            gap: 1,
-            minHeight: { xs: 60, md: 68 },
-            maxWidth: 1280,
-            width: '100%',
-            mx: 'auto',
-            px: { xs: 1.5, md: 3 },
-          }}
-        >
-          <Box
-            component={RouterLink}
-            to="/dashboard"
+    const avatarLetter = user?.name?.charAt(0)?.toUpperCase() || 'U'
+
+    const navLinks = [
+        {
+            label: t('nav.home'),
+            icon: <Dashboard fontSize="small" />,
+            path: '/dashboard'
+        },
+        {
+            label: t('nav.research'),
+            icon: <Article fontSize="small" />,
+            path: '/posts'
+        },
+        {
+            label: t('nav.journals'),
+            icon: <MenuBook fontSize="small" />,
+            path: '/journals'
+        },
+        {
+            label: t('nav.conferences'),
+            icon: <Event fontSize="small" />,
+            path: '/conferences'
+        },
+        {
+            label: t('nav.publishResearch'),
+            icon: <Add fontSize="small" />,
+            path: '/posts/create'
+        }
+    ]
+
+    return (
+        <AppBar
+            position="sticky"
+            elevation={0}
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.25,
-              textDecoration: 'none',
-              flexShrink: 0,
+                borderBottom: '1px solid',
+                borderColor: 'divider'
             }}
-          >
-            <Box
-              sx={{
-                width: 42,
-                height: 42,
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: (th) =>
-                  `linear-gradient(135deg, ${th.palette.primary.main} 0%, ${th.palette.primary.dark} 100%)`,
-                boxShadow: '0 4px 14px rgba(12, 110, 103, 0.35)',
-              }}
-            >
-              <School sx={{ color: 'common.white', fontSize: 26 }} />
-            </Box>
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  background: (th) =>
-                    `linear-gradient(90deg, ${th.palette.primary.dark}, ${th.palette.primary.main})`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                GFR
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1, mt: 0.25 }}>
-                {t('nav.tagline')}
-              </Typography>
-            </Box>
-          </Box>
-
-          {!downMd && (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                flex: 1,
-              }}
-            >
-              {navLinks.map((link) => (
-                <Button
-                  key={link.path}
-                  component={RouterLink}
-                  to={link.path}
-                  startIcon={link.icon}
-                  sx={{
-                    color: 'text.primary',
-                    fontWeight: 600,
-                    px: 1.25,
-                    borderRadius: 2,
-                    '&:hover': {
-                      bgcolor: 'rgba(12, 110, 103, 0.08)',
-                    },
-                  }}
-                >
-                  {link.label}
-                </Button>
-              ))}
-              {isAdmin && (
-                <Button
-                  component={RouterLink}
-                  to="/admin"
-                  startIcon={<AdminPanelSettings fontSize="small" />}
-                  sx={{
-                    fontWeight: 700,
-                    color: 'secondary.main',
-                    borderRadius: 2,
-                    '&:hover': { bgcolor: 'rgba(196, 92, 38, 0.1)' },
-                  }}
-                >
-                  {t('nav.admin')}
-                </Button>
-              )}
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-            {downMd && (
-              <IconButton
-                aria-label={t('nav.menu')}
-                onClick={() => setMobileOpen(true)}
-                sx={{ color: 'text.primary' }}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-
-            <Tooltip title={t('nav.language')}>
-              <IconButton
-                size="small"
-                onClick={(e) => setLangAnchor(e.currentTarget)}
-                sx={{ color: 'text.secondary' }}
-              >
-                <Translate fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Menu
-              anchorEl={langAnchor}
-              open={Boolean(langAnchor)}
-              onClose={() => setLangAnchor(null)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: theme.direction === 'rtl' ? 'left' : 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: theme.direction === 'rtl' ? 'left' : 'right' }}
-              PaperProps={{ sx: menuPaperSx }}
-            >
-              <MenuItem
-                selected={i18n.language === 'en'}
-                onClick={() => {
-                  i18n.changeLanguage('en');
-                  setLangAnchor(null);
-                }}
-              >
-                English
-              </MenuItem>
-              <MenuItem
-                selected={i18n.language === 'ar'}
-                onClick={() => {
-                  i18n.changeLanguage('ar');
-                  setLangAnchor(null);
-                }}
-              >
-                العربية
-              </MenuItem>
-              <MenuItem
-                selected={i18n.language === 'fr'}
-                onClick={() => {
-                  i18n.changeLanguage('fr');
-                  setLangAnchor(null);
-                }}
-              >
-                Français
-              </MenuItem>
-            </Menu>
-
-            <Tooltip title={t('nav.messages')}>
-              <IconButton component={RouterLink} to="/messages" sx={{ color: 'text.secondary' }}>
-                <Badge badgeContent={0} color="error">
-                  <Message />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={t('nav.notifications')}>
-              <IconButton sx={{ color: 'text.secondary' }}>
-                <Badge badgeContent={0} color="error">
-                  <Notifications />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={user?.name}>
-              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>
-                <Avatar
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    fontSize: 16,
-                    fontWeight: 800,
-                    background: (th) =>
-                      `linear-gradient(145deg, ${th.palette.secondary.main}, ${th.palette.secondary.dark})`,
-                    boxShadow: '0 2px 8px rgba(196, 92, 38, 0.3)',
-                  }}
-                >
-                  {avatarLetter}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      <Drawer
-        anchor={drawerAnchor}
-        open={mobileOpen}
-        onClose={closeMobile}
-        PaperProps={{
-          sx: {
-            width: 280,
-            pt: 2,
-            borderRadius: drawerAnchor === 'right' ? '16px 0 0 16px' : '0 16px 16px 0',
-          },
-        }}
-      >
-        <List sx={{ px: 1 }}>
-          {navLinks.map((link) => (
-            <ListItemButton
-              key={link.path}
-              component={RouterLink}
-              to={link.path}
-              onClick={closeMobile}
-              sx={{ borderRadius: 2, mb: 0.5 }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>{link.icon}</ListItemIcon>
-              <ListItemText primary={link.label} primaryTypographyProps={{ fontWeight: 600 }} />
-            </ListItemButton>
-          ))}
-          {isAdmin && (
-            <ListItemButton
-              component={RouterLink}
-              to="/admin"
-              onClick={closeMobile}
-              sx={{ borderRadius: 2, color: 'secondary.main' }}
-            >
-              <ListItemIcon sx={{ minWidth: 40, color: 'secondary.main' }}>
-                <AdminPanelSettings fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary={t('nav.admin')} primaryTypographyProps={{ fontWeight: 700 }} />
-            </ListItemButton>
-          )}
-        </List>
-      </Drawer>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={() => setAnchorEl(null)}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: theme.direction === 'rtl' ? 'left' : 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: theme.direction === 'rtl' ? 'left' : 'right',
-        }}
-        PaperProps={{ sx: menuPaperSx }}
-      >
-        <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography fontWeight={800} noWrap>
-            {user?.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {user?.email}
-          </Typography>
-        </Box>
-
-        <Divider />
-
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null);
-            navigate('/profile');
-          }}
         >
-          <ListItemIcon>
-            <Person fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t('nav.profile')}</ListItemText>
-        </MenuItem>
+            <Toolbar sx={{ justifyContent: 'space-between' }}>
+                {/* Logo */}
+                <Box
+                    component={RouterLink}
+                    to="/dashboard"
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        textDecoration: 'none'
+                    }}
+                >
+                    <School sx={{ color: 'primary.main', fontSize: 32 }} />
+                    <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        color="primary.main"
+                    >
+                        GFR
+                    </Typography>
+                </Box>
 
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null);
-            navigate('/messages');
-          }}
-        >
-          <ListItemIcon>
-            <Message fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t('nav.messages')}</ListItemText>
-        </MenuItem>
+                {/* Nav Links */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {navLinks.map(link => (
+                        <Button
+                            key={link.path}
+                            component={RouterLink}
+                            to={link.path}
+                            startIcon={link.icon}
+                            sx={{
+                                color: 'text.primary',
+                                fontWeight: 500,
+                                fontSize: '0.85rem',
+                                '&:hover': { bgcolor: 'action.hover' }
+                            }}
+                        >
+                            {link.label}
+                        </Button>
+                    ))}
+                    {isAdmin && (
+                        <Button
+                            component={RouterLink}
+                            to="/admin"
+                            startIcon={<AdminPanelSettings fontSize="small" />}
+                            color="error"
+                            sx={{ fontWeight: 500 }}
+                        >
+                            {t('nav.admin')}
+                        </Button>
+                    )}
+                </Box>
 
-        {isAdmin && (
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              navigate('/admin');
-            }}
-          >
-            <ListItemIcon>
-              <AdminPanelSettings fontSize="small" color="secondary" />
-            </ListItemIcon>
-            <ListItemText sx={{ color: 'secondary.main', fontWeight: 700 }}>{t('nav.adminPanel')}</ListItemText>
-          </MenuItem>
-        )}
+                {/* Right Side */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {/* Dark Mode Toggle */}
+                    <Tooltip
+                        title={
+                            mode === 'dark'
+                                ? t('nav.lightMode')
+                                : t('nav.darkMode')
+                        }
+                    >
+                        <IconButton
+                            onClick={toggleTheme}
+                            sx={{ color: 'text.secondary' }}
+                        >
+                            {mode === 'dark' ? (
+                                <LightMode sx={{ color: '#ffd700' }} />
+                            ) : (
+                                <DarkMode />
+                            )}
+                        </IconButton>
+                    </Tooltip>
 
-        <Divider />
+                    {/* Language */}
+                    <Tooltip title={t('nav.language')}>
+                        <IconButton
+                            onClick={e => setLangAnchor(e.currentTarget)}
+                            sx={{ color: 'text.secondary' }}
+                            aria-label={t('nav.language')}
+                        >
+                            <Translate />
+                        </IconButton>
+                    </Tooltip>
 
-        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-          <ListItemIcon>
-            <Logout fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>{t('nav.logout')}</ListItemText>
-        </MenuItem>
-      </Menu>
-    </>
-  );
-};
+                    {/* Messages */}
+                    <Tooltip title={t('nav.messages')}>
+                        <IconButton
+                            component={RouterLink}
+                            to="/messages"
+                            sx={{ color: 'text.secondary' }}
+                        >
+                            <Badge badgeContent={unreadCount} color="error">
+                                <Message />
+                            </Badge>
+                        </IconButton>
+                    </Tooltip>
 
-export default Navbar;
+                    {/* Notifications */}
+                    <Tooltip title={t('nav.notifications')}>
+                        <IconButton
+                            onClick={e =>
+                                setNotificationAnchor(e.currentTarget)
+                            }
+                            sx={{ color: 'text.secondary' }}
+                            aria-label={t('nav.notifications')}
+                        >
+                            <Badge badgeContent={unreadCount} color="error">
+                                <Notifications />
+                            </Badge>
+                        </IconButton>
+                    </Tooltip>
+
+                    {/* Avatar */}
+                    <Tooltip title={user?.name}>
+                        <IconButton onClick={e => setAnchorEl(e.currentTarget)}>
+                            <Avatar
+                                sx={{
+                                    width: 38,
+                                    height: 38,
+                                    bgcolor: 'primary.main',
+                                    fontSize: 16,
+                                    fontWeight: 700
+                                }}
+                            >
+                                {avatarLetter}
+                            </Avatar>
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+
+                {/* Dropdown Menu */}
+                <Menu
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={() => setAnchorEl(null)}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    PaperProps={{ sx: { width: 240, borderRadius: 2, mt: 1 } }}
+                >
+                    {/* User Info */}
+                    <Box sx={{ px: 2, py: 1.5 }}>
+                        <Typography fontWeight={700} noWrap>
+                            {user?.name}
+                        </Typography>
+                        <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                        >
+                            {user?.email}
+                        </Typography>
+                    </Box>
+
+                    <Divider />
+
+                    <MenuItem
+                        onClick={() => {
+                            setAnchorEl(null)
+                            navigate('/profile')
+                        }}
+                    >
+                        <ListItemIcon>
+                            <Person fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{t('nav.profile')}</ListItemText>
+                    </MenuItem>
+
+                    <MenuItem
+                        onClick={() => {
+                            setAnchorEl(null)
+                            navigate('/messages')
+                        }}
+                    >
+                        <ListItemIcon>
+                            <Message fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{t('nav.messages')}</ListItemText>
+                    </MenuItem>
+
+                    {/* Dark Mode في القائمة */}
+                    <MenuItem onClick={toggleTheme}>
+                        <ListItemIcon>
+                            {mode === 'dark' ? (
+                                <LightMode
+                                    fontSize="small"
+                                    sx={{ color: '#ffd700' }}
+                                />
+                            ) : (
+                                <DarkMode fontSize="small" />
+                            )}
+                        </ListItemIcon>
+                        <ListItemText>
+                            {mode === 'dark'
+                                ? t('nav.lightMode')
+                                : t('nav.darkMode')}
+                        </ListItemText>
+                        <Switch
+                            checked={mode === 'dark'}
+                            size="small"
+                            onChange={toggleTheme}
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </MenuItem>
+
+                    {isAdmin && (
+                        <>
+                            <Divider />
+                            <MenuItem
+                                onClick={() => {
+                                    setAnchorEl(null)
+                                    navigate('/admin')
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <AdminPanelSettings
+                                        fontSize="small"
+                                        color="error"
+                                    />
+                                </ListItemIcon>
+                                <ListItemText sx={{ color: 'error.main' }}>
+                                    {t('nav.adminPanel')}
+                                </ListItemText>
+                            </MenuItem>
+                        </>
+                    )}
+
+                    <Divider />
+
+                    <MenuItem
+                        onClick={handleLogout}
+                        sx={{ color: 'error.main' }}
+                    >
+                        <ListItemIcon>
+                            <Logout fontSize="small" color="error" />
+                        </ListItemIcon>
+                        <ListItemText>{t('nav.logout')}</ListItemText>
+                    </MenuItem>
+                </Menu>
+
+                <Menu
+                    anchorEl={langAnchor}
+                    open={Boolean(langAnchor)}
+                    onClose={() => setLangAnchor(null)}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                    <MenuItem
+                        selected={i18n.language === 'en'}
+                        onClick={() => {
+                            i18n.changeLanguage('en')
+                            setLangAnchor(null)
+                        }}
+                    >
+                        🇬🇧 English
+                    </MenuItem>
+                    <MenuItem
+                        selected={i18n.language === 'ar'}
+                        onClick={() => {
+                            i18n.changeLanguage('ar')
+                            setLangAnchor(null)
+                        }}
+                    >
+                        🇩🇿 العربية
+                    </MenuItem>
+                    <MenuItem
+                        selected={i18n.language === 'fr'}
+                        onClick={() => {
+                            i18n.changeLanguage('fr')
+                            setLangAnchor(null)
+                        }}
+                    >
+                        🇫🇷 Français
+                    </MenuItem>
+                </Menu>
+
+                <Menu
+                    anchorEl={notificationAnchor}
+                    open={notificationOpen}
+                    onClose={() => setNotificationAnchor(null)}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    PaperProps={{ sx: { width: 340, borderRadius: 2, mt: 1 } }}
+                >
+                    <Box sx={{ px: 2, py: 1.5 }}>
+                        <Typography fontWeight={700} noWrap>
+                            {t('nav.notifications')}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {unreadCount > 0
+                                ? t('nav.unreadNotifications', {
+                                      count: unreadCount
+                                  })
+                                : t('nav.noNotifications')}
+                        </Typography>
+                    </Box>
+
+                    <Divider />
+
+                    {notifications.length === 0 ? (
+                        <MenuItem disabled>{t('nav.noNotifications')}</MenuItem>
+                    ) : (
+                        notifications.map(conv => (
+                            <MenuItem
+                                key={conv.user?.id}
+                                onClick={() =>
+                                    openConversationFromNotification(conv)
+                                }
+                                sx={{ py: 1.2 }}
+                            >
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1.5,
+                                        width: '100%'
+                                    }}
+                                >
+                                    <Badge
+                                        badgeContent={conv.unread_count}
+                                        color="error"
+                                        overlap="circular"
+                                    >
+                                        <Avatar
+                                            sx={{ bgcolor: 'secondary.main' }}
+                                        >
+                                            {conv.user?.name?.charAt(0) || 'U'}
+                                        </Avatar>
+                                    </Badge>
+                                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                                        <Typography fontWeight={700} noWrap>
+                                            {conv.user?.name}
+                                        </Typography>
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            noWrap
+                                        >
+                                            {conv.last_message ||
+                                                t('nav.newNotification')}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </MenuItem>
+                        ))
+                    )}
+
+                    <Divider />
+
+                    <MenuItem
+                        onClick={() => {
+                            setNotificationAnchor(null)
+                            navigate('/messages')
+                        }}
+                    >
+                        <ListItemText>{t('nav.viewAllMessages')}</ListItemText>
+                    </MenuItem>
+                </Menu>
+            </Toolbar>
+        </AppBar>
+    )
+}
+
+export default Navbar

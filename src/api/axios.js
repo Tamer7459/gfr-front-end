@@ -1,13 +1,19 @@
 import axios from 'axios'
 
+const API_BASE_URL =
+    process.env.REACT_APP_API_URL ||
+    (process.env.NODE_ENV === 'development'
+        ? 'http://127.0.0.1:8000/api'
+        : 'https://gfr-back-end.onrender.com/api')
+
 // إنشاء instance
 const axiosInstance = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api',
+    baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json'
     },
-    withCredentials: true,
+    withCredentials: true
 })
 
 // إضافة Bearer Token تلقائياً لكل طلب

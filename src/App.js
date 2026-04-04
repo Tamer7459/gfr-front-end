@@ -8,6 +8,7 @@ import { cacheLtr, cacheRtl } from './i18n/emotionCache';
 import { createAppTheme } from './theme/createAppTheme';
 import { AuthProvider } from './context/AuthContext';
 import AppRoutes from './routes/AppRoutes';
+import { ThemeContextProvider } from './context/ThemeContext';
 
 function AppShell() {
   const { i18n, t } = useTranslation();
@@ -33,12 +34,14 @@ function AppShell() {
 
 function App() {
   return (
-    <>
-    <SpeedInsights />
     <BrowserRouter>
-      <AppShell />
+      <ThemeContextProvider>
+        <CssBaseline />
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeContextProvider>
     </BrowserRouter>
-    </>
   );
 }
 

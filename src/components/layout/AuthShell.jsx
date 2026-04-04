@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography, IconButton, Menu, MenuItem, Tooltip, useTheme } from '@mui/material';
-import { School, Translate } from '@mui/icons-material';
+import { School, Translate, DarkMode, LightMode } from '@mui/icons-material';
+import { useThemeContext } from '../../context/ThemeContext';
 
-/** Shared layout for sign-in / sign-up with hero panel + form area */
 const AuthShell = ({ children, headline, subheadline }) => {
-  const { t, i18n } = useTranslation();
-  const theme = useTheme();
+  const { t, i18n }          = useTranslation();
+  const theme                 = useTheme();
+  const { mode, toggleTheme } = useThemeContext();
   const [langAnchor, setLangAnchor] = useState(null);
 
   return (
@@ -20,19 +21,40 @@ const AuthShell = ({ children, headline, subheadline }) => {
         position: 'relative',
       }}
     >
+      {/* ── أزرار الأعلى ─────────────────────── */}
       <Box
         sx={{
           position: 'absolute',
           top: 12,
           zIndex: 10,
+          display: 'flex',
+          gap: 1,
           ...(theme.direction === 'rtl' ? { left: 12 } : { right: 12 }),
         }}
       >
+        {/* زر Dark Mode */}
+        <Tooltip title={mode === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}>
+          <IconButton
+            onClick={toggleTheme}
+            sx={{
+              bgcolor:   'background.paper',
+              boxShadow: 1,
+              '&:hover': { bgcolor: 'background.paper' },
+            }}
+          >
+            {mode === 'dark'
+              ? <LightMode fontSize="small" sx={{ color: '#ffd700' }} />
+              : <DarkMode  fontSize="small" />
+            }
+          </IconButton>
+        </Tooltip>
+
+        {/* زر اللغة */}
         <Tooltip title={t('nav.language')}>
           <IconButton
             onClick={(e) => setLangAnchor(e.currentTarget)}
             sx={{
-              bgcolor: 'background.paper',
+              bgcolor:   'background.paper',
               boxShadow: 1,
               '&:hover': { bgcolor: 'background.paper' },
             }}
@@ -41,43 +63,27 @@ const AuthShell = ({ children, headline, subheadline }) => {
             <Translate fontSize="small" />
           </IconButton>
         </Tooltip>
+
         <Menu
           anchorEl={langAnchor}
           open={Boolean(langAnchor)}
           onClose={() => setLangAnchor(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: theme.direction === 'rtl' ? 'left' : 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: theme.direction === 'rtl' ? 'left' : 'right' }}
+          anchorOrigin={{    vertical: 'bottom', horizontal: theme.direction === 'rtl' ? 'left' : 'right' }}
+          transformOrigin={{ vertical: 'top',    horizontal: theme.direction === 'rtl' ? 'left' : 'right' }}
         >
-          <MenuItem
-            selected={i18n.language === 'en'}
-            onClick={() => {
-              i18n.changeLanguage('en');
-              setLangAnchor(null);
-            }}
-          >
-            English
+          <MenuItem selected={i18n.language === 'en'} onClick={() => { i18n.changeLanguage('en'); setLangAnchor(null); }}>
+            🇬🇧 English
           </MenuItem>
-          <MenuItem
-            selected={i18n.language === 'ar'}
-            onClick={() => {
-              i18n.changeLanguage('ar');
-              setLangAnchor(null);
-            }}
-          >
-            العربية
+          <MenuItem selected={i18n.language === 'ar'} onClick={() => { i18n.changeLanguage('ar'); setLangAnchor(null); }}>
+            🇩🇿 العربية
           </MenuItem>
-          <MenuItem
-            selected={i18n.language === 'fr'}
-            onClick={() => {
-              i18n.changeLanguage('fr');
-              setLangAnchor(null);
-            }}
-          >
-            Français
+          <MenuItem selected={i18n.language === 'fr'} onClick={() => { i18n.changeLanguage('fr'); setLangAnchor(null); }}>
+            🇫🇷 Français
           </MenuItem>
         </Menu>
       </Box>
 
+      {/* باقي الكود بدون تغيير */}
       <Box
         sx={{
           flex: 1,
@@ -109,34 +115,23 @@ const AuthShell = ({ children, headline, subheadline }) => {
       >
         <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 420 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 2,
-                bgcolor: 'rgba(255,255,255,0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
+            <Box sx={{
+              width: 48, height: 48, borderRadius: 2,
+              bgcolor: 'rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(8px)',
+            }}>
               <School sx={{ fontSize: 28, color: 'common.white' }} />
             </Box>
             <Typography variant="h5" fontWeight={800} sx={{ color: 'common.white', letterSpacing: 0.5 }}>
               GFR
             </Typography>
           </Box>
-          <Typography
-            variant="h3"
-            sx={{
-              color: 'common.white',
-              fontWeight: 800,
-              lineHeight: 1.15,
-              mb: 2,
-              fontSize: { md: '2.25rem', lg: '2.75rem' },
-            }}
-          >
+          <Typography variant="h3" sx={{
+            color: 'common.white', fontWeight: 800,
+            lineHeight: 1.15, mb: 2,
+            fontSize: { md: '2.25rem', lg: '2.75rem' },
+          }}>
             {headline}
           </Typography>
           <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.88)', lineHeight: 1.7, maxWidth: 380 }}>
@@ -145,44 +140,23 @@ const AuthShell = ({ children, headline, subheadline }) => {
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: { xs: 2, sm: 3 },
-          position: 'relative',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -120,
-            right: -80,
-            width: 280,
-            height: 280,
-            borderRadius: '50%',
-            background: (th) => `${th.palette.primary.main}`,
-            opacity: 0.06,
-            filter: 'blur(60px)',
-            pointerEvents: 'none',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: -60,
-            left: -40,
-            width: 220,
-            height: 220,
-            borderRadius: '50%',
-            background: (th) => `${th.palette.secondary.main}`,
-            opacity: 0.08,
-            filter: 'blur(50px)',
-            pointerEvents: 'none',
-          }}
-        />
+      <Box sx={{
+        flex: 1, display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        p: { xs: 2, sm: 3 }, position: 'relative',
+      }}>
+        <Box sx={{
+          position: 'absolute', top: -120, right: -80,
+          width: 280, height: 280, borderRadius: '50%',
+          background: (th) => `${th.palette.primary.main}`,
+          opacity: 0.06, filter: 'blur(60px)', pointerEvents: 'none',
+        }} />
+        <Box sx={{
+          position: 'absolute', bottom: -60, left: -40,
+          width: 220, height: 220, borderRadius: '50%',
+          background: (th) => `${th.palette.secondary.main}`,
+          opacity: 0.08, filter: 'blur(50px)', pointerEvents: 'none',
+        }} />
         {children}
       </Box>
     </Box>

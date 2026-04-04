@@ -50,14 +50,15 @@ export const AuthProvider = ({ children }) => {
     }
 
     // ── تسجيل حساب جديد ──────────────────────────
-    const register = async (name, email, password, password_confirmation) => {
+    const register = async (name, email, password, password_confirmation, role = 'researcher') => {
         try {
             const { data } = await axiosInstance.post('/register', {
-                name,
-                email,
-                password,
-                password_confirmation
-            })
+    name,
+    email,
+    password,
+    password_confirmation,
+    role,
+    });
             if (!data.token) {
                 throw new Error(i18n.t('auth.noToken'))
             }

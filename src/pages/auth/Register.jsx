@@ -17,6 +17,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Person, Email, Lock, Visibility, VisibilityOff, School } from '@mui/icons-material';
+import { Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 
 const Register = () => {
   const { t, i18n } = useTranslation();
@@ -25,11 +26,13 @@ const Register = () => {
   const textDir = i18n.language === 'ar' ? 'rtl' : 'ltr';
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    password_confirmation: '',
-  });
+  name:                  '',
+  email:                 '',
+  password:              '',
+  password_confirmation: '',
+  role:                  'researcher',  // ← جديد
+});
+
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,7 +60,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password, form.password_confirmation);
+      await register(form.name, form.email, form.password, form.password_confirmation, form.role);
       navigate('/dashboard');
     } catch (err) {
       const errors = err.response?.data?.errors;
@@ -188,6 +191,19 @@ const Register = () => {
               }}
               dir={textDir}
             />
+            <FormControl fullWidth sx={{ mb: 2 }}>
+  <InputLabel>{t('auth.role')}</InputLabel>
+  <Select
+    name="role"
+    value={form.role}
+    onChange={handleChange}
+    label={t('auth.role')}
+  >
+    <MenuItem value="researcher">🔬 {t('Researcher')}</MenuItem>
+    <MenuItem value="professor">🎓 {t('Professor')}</MenuItem>
+    <MenuItem value="reviewer">📝 {t('Reviewer')}</MenuItem>
+  </Select>
+</FormControl>
 
             <Button
               fullWidth

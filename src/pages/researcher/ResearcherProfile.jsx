@@ -1,8 +1,9 @@
-import { useEffect, useState , useCallback } from 'react';
-import { useParams, Link as RouterLink } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import axiosInstance from '../../api/axios';
-import { dateLocaleFromLng } from '../../i18n/localeUtils';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams }                        from 'react-router-dom';
+import { useNavigate }                      from 'react-router-dom';
+import { useTranslation }                   from 'react-i18next';
+import axiosInstance                        from '../../api/axios';
+import { dateLocaleFromLng }                from '../../i18n/localeUtils';
 import {
   Box, Card, CardContent, Typography,
   Avatar, Chip, Grid, Divider,
@@ -15,29 +16,28 @@ import {
 
 const ResearcherProfile = () => {
   const { t, i18n } = useTranslation();
-  const { id } = useParams();
-  const dateLocale = dateLocaleFromLng(i18n.language);
+  const { id }      = useParams();
+  const navigate    = useNavigate();
+  const dateLocale  = dateLocaleFromLng(i18n.language);
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axiosInstance.get(`/users/${id}/profile`);
+      setProfile(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
-const fetchProfile = useCallback(async () => {
-  setLoading(true);
-  try {
-    const { data } = await axiosInstance.get(`/users/${id}/profile`);
-    setProfile(data);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-}, [id]);
-
-useEffect(() => {
-  fetchProfile();
-}, [fetchProfile]);
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   if (loading)
     return (
@@ -55,9 +55,9 @@ useEffect(() => {
     );
 
   const stats = [
-    { icon: <Article />, label: t('researcher.statPosts'), value: profile.posts_count || 0, color: 'primary' },
-    { icon: <School />, label: t('researcher.statPapers'), value: profile.journals_count || 0, color: 'secondary' },
-    { icon: <RateReview />, label: t('researcher.statReviews'), value: profile.reviews_count || 0, color: 'success' },
+    { icon: <Article />,    label: t('researcher.statPosts'),   value: profile.posts_count    || 0, color: 'primary'   },
+    { icon: <School />,     label: t('researcher.statPapers'),  value: profile.journals_count || 0, color: 'secondary' },
+    { icon: <RateReview />, label: t('researcher.statReviews'), value: profile.reviews_count  || 0, color: 'success'   },
   ];
 
   return (
@@ -65,16 +65,15 @@ useEffect(() => {
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-            <Avatar
-              sx={{
-                width: 100,
-                height: 100,
-                fontSize: 40,
-                fontWeight: 700,
-                bgcolor: 'primary.main',
-                flexShrink: 0,
-              }}
-            >
+
+            <Avatar sx={{
+              width:   100,
+              height:  100,
+              fontSize: 40,
+              fontWeight: 700,
+              bgcolor: 'primary.main',
+              flexShrink: 0,
+            }}>
               {profile.name?.charAt(0)?.toUpperCase()}
             </Avatar>
 
@@ -105,45 +104,44 @@ useEffect(() => {
                 <Typography variant="caption" color="text.secondary">
                   {t('researcher.memberSince')}{' '}
                   {new Date(profile.created_at).toLocaleDateString(dateLocale, {
-                    year: 'numeric',
-                    month: 'long',
+                    year: 'numeric', month: 'long',
                   })}
                 </Typography>
               </Box>
             </Box>
 
-            <Button component={RouterLink} to="/messages" variant="outlined" startIcon={<Message />} size="small">
+            {/* ✅ زر المراسلة المُصلح */}
+            <Button
+              variant="outlined"
+              startIcon={<Message />}
+              size="small"
+              onClick={() => navigate('/messages', {
+                state: { targetUser: profile }
+              })}
+            >
               {t('researcher.message')}
             </Button>
+
           </Box>
         </CardContent>
       </Card>
 
+      {/* Stats */}
       <Grid container spacing={2} mb={3}>
         {stats.map((stat, i) => (
           <Grid item xs={4} key={i}>
             <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  mb: 1,
-                  color: `${stat.color}.main`,
-                }}
-              >
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, color: `${stat.color}.main` }}>
                 {stat.icon}
               </Box>
-              <Typography variant="h4" fontWeight={700}>
-                {stat.value}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {stat.label}
-              </Typography>
+              <Typography variant="h4" fontWeight={700}>{stat.value}</Typography>
+              <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
             </Paper>
           </Grid>
         ))}
       </Grid>
 
+      {/* Latest Posts */}
       {profile.posts?.length > 0 && (
         <Card>
           <CardContent>
@@ -154,9 +152,7 @@ useEffect(() => {
             {profile.posts.map((post, i) => (
               <Box key={post.id}>
                 <Box sx={{ py: 1.5 }}>
-                  <Typography fontWeight={600} mb={0.5}>
-                    {post.title}
-                  </Typography>
+                  <Typography fontWeight={600} mb={0.5}>{post.title}</Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
