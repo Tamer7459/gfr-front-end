@@ -36,7 +36,7 @@
   "devDependencies": {
     "source-map-loader": "^4.0.0"
   },
-  "homepage": ".",
+  "homepage": "https://tamer7459.github.io/gfr-front-end",
   "eslintConfig": {
     "extends": [
       "react-app",
