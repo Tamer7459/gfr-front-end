@@ -3,7 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { CacheProvider } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
-import { SpeedInsights } from "@vercel/speed-insights/react";
+
 import { cacheLtr, cacheRtl } from './i18n/emotionCache';
 import { createAppTheme } from './theme/createAppTheme';
 import { AuthProvider } from './context/AuthContext';
@@ -36,10 +36,7 @@ function App() {
   return (
     <BrowserRouter>
       <ThemeContextProvider>
-        <CssBaseline />
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <AppShell />
       </ThemeContextProvider>
     </BrowserRouter>
   );
