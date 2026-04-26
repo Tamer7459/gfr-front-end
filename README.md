@@ -91,7 +91,6 @@ npm start
 This project is configured for deployment on:
 
 * Vercel
-* Netlify
 
 Make sure to:
 
