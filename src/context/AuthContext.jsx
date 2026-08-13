@@ -1,3 +1,4 @@
+'use client'
 import { createContext, useContext, useState, useEffect } from 'react'
 import axiosInstance from '../api/axios'
 import i18n from '../i18n'
@@ -10,6 +11,10 @@ export const AuthProvider = ({ children }) => {
 
     // ── تحميل المستخدم عند فتح التطبيق ──────────
     useEffect(() => {
+        if (typeof window === 'undefined') {
+            setLoading(false)
+            return
+        }
         const token = localStorage.getItem('gfr_token')
         if (token) {
             fetchUser()
@@ -23,7 +28,7 @@ export const AuthProvider = ({ children }) => {
             const { data } = await axiosInstance.get('/me')
             setUser(data)
         } catch {
-            localStorage.removeItem('gfr_token')
+            if (typeof window !== 'undefined') localStorage.removeItem('gfr_token')
         } finally {
             setLoading(false)
         }
@@ -39,12 +44,12 @@ export const AuthProvider = ({ children }) => {
             if (!data.token) {
                 throw new Error(i18n.t('auth.noToken'))
             }
-            localStorage.setItem('gfr_token', data.token)
+            if (typeof window !== 'undefined') localStorage.setItem('gfr_token', data.token)
             setUser(data.user)
             return data
         } catch (error) {
             // تنظيف في حالة الخطأ
-            localStorage.removeItem('gfr_token')
+            if (typeof window !== 'undefined') localStorage.removeItem('gfr_token')
             throw error
         }
     }
@@ -53,16 +58,16 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password, password_confirmation, role = 'researcher') => {
         try {
             const { data } = await axiosInstance.post('/register', {
-    name,
-    email,
-    password,
-    password_confirmation,
-    role,
-    });
+                name,
+                email,
+                password,
+                password_confirmation,
+                role,
+            })
             if (!data.token) {
                 throw new Error(i18n.t('auth.noToken'))
             }
-            localStorage.setItem('gfr_token', data.token)
+            if (typeof window !== 'undefined') localStorage.setItem('gfr_token', data.token)
             setUser(data.user)
             return data
         } catch (error) {
@@ -75,7 +80,7 @@ export const AuthProvider = ({ children }) => {
         try {
             await axiosInstance.post('/logout')
         } finally {
-            localStorage.removeItem('gfr_token')
+            if (typeof window !== 'undefined') localStorage.removeItem('gfr_token')
             setUser(null)
         }
     }

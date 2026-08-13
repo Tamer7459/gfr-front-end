@@ -49,6 +49,7 @@
         "passwordShort": "Le mot de passe doit contenir au moins 8 caractères",
         "passwordMismatch": "Les mots de passe ne correspondent pas",
         "noToken": "Aucun jeton reçu du serveur",
+        "serverUnreachable": "Impossible de joindre le serveur. Assurez-vous que Laravel est démarré (php artisan serve) puis réessayez.",
         "errorGeneric": "Une erreur s'est produite, veuillez réessayer"
     },
     "dashboard": {

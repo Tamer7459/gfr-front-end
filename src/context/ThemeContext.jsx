@@ -1,17 +1,27 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+'use client'
+import { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material';
 
 const ThemeContext = createContext(null);
 
 export const ThemeContextProvider = ({ children }) => {
-  const [mode, setMode] = useState(
-    localStorage.getItem('gfr_theme') || 'light'
-  );
+  const [mode, setMode] = useState('light');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gfr_theme');
+      if (saved === 'dark' || saved === 'light') {
+        setMode(saved);
+      }
+    }
+  }, []);
 
   const toggleTheme = () => {
     const newMode = mode === 'light' ? 'dark' : 'light';
     setMode(newMode);
-    localStorage.setItem('gfr_theme', newMode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gfr_theme', newMode);
+    }
   };
 
   const theme = useMemo(() => createTheme({
@@ -72,7 +82,6 @@ export const ThemeContextProvider = ({ children }) => {
   );
 };
 
-// في ThemeContext.jsx
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
   if (!context) throw new Error('useThemeContext must be used within ThemeContextProvider');

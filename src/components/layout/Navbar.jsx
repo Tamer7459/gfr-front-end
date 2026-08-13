@@ -1,9 +1,12 @@
+'use client'
 import { useEffect, useState } from 'react'
-import { useNavigate, Link as RouterLink } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useThemeContext } from '../../context/ThemeContext'
 import axiosInstance from '../../api/axios'
+import { setPendingTargetUser } from '../../utils/navigationState'
 import {
     AppBar,
     Toolbar,
@@ -42,7 +45,7 @@ const Navbar = () => {
     const { user, logout, isAdmin } = useAuth()
     const { t, i18n } = useTranslation()
     const { mode, toggleTheme } = useThemeContext()
-    const navigate = useNavigate()
+    const router = useRouter()
 
     const [anchorEl, setAnchorEl] = useState(null)
     const [langAnchor, setLangAnchor] = useState(null)
@@ -85,15 +88,14 @@ const Navbar = () => {
 
     const openConversationFromNotification = conv => {
         setNotificationAnchor(null)
-        navigate('/messages', {
-            state: { targetUser: conv.user }
-        })
+        setPendingTargetUser(conv.user)
+        router.push('/messages')
     }
 
     const handleLogout = async () => {
         setAnchorEl(null)
         await logout()
-        navigate('/login')
+        router.replace('/login')
     }
 
     const avatarLetter = user?.name?.charAt(0)?.toUpperCase() || 'U'
@@ -138,8 +140,8 @@ const Navbar = () => {
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 {/* Logo */}
                 <Box
-                    component={RouterLink}
-                    to="/dashboard"
+                    component={Link}
+                    href="/dashboard"
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -162,8 +164,8 @@ const Navbar = () => {
                     {navLinks.map(link => (
                         <Button
                             key={link.path}
-                            component={RouterLink}
-                            to={link.path}
+                            component={Link}
+                            href={link.path}
                             startIcon={link.icon}
                             sx={{
                                 color: 'text.primary',
@@ -177,8 +179,8 @@ const Navbar = () => {
                     ))}
                     {isAdmin && (
                         <Button
-                            component={RouterLink}
-                            to="/admin"
+                            component={Link}
+                            href="/admin"
                             startIcon={<AdminPanelSettings fontSize="small" />}
                             color="error"
                             sx={{ fontWeight: 500 }}
@@ -224,8 +226,8 @@ const Navbar = () => {
                     {/* Messages */}
                     <Tooltip title={t('nav.messages')}>
                         <IconButton
-                            component={RouterLink}
-                            to="/messages"
+                            component={Link}
+                            href="/messages"
                             sx={{ color: 'text.secondary' }}
                         >
                             <Badge badgeContent={unreadCount} color="error">
@@ -295,7 +297,7 @@ const Navbar = () => {
                     <MenuItem
                         onClick={() => {
                             setAnchorEl(null)
-                            navigate('/profile')
+                            router.push('/profile')
                         }}
                     >
                         <ListItemIcon>
@@ -307,7 +309,7 @@ const Navbar = () => {
                     <MenuItem
                         onClick={() => {
                             setAnchorEl(null)
-                            navigate('/messages')
+                            router.push('/messages')
                         }}
                     >
                         <ListItemIcon>
@@ -341,13 +343,14 @@ const Navbar = () => {
                         />
                     </MenuItem>
 
-                    {isAdmin && (
-                        <>
-                            <Divider />
+                    {isAdmin &&
+                        [
+                            <Divider key="divider" />,
                             <MenuItem
+                                key="admin"
                                 onClick={() => {
                                     setAnchorEl(null)
-                                    navigate('/admin')
+                                    router.push('/admin')
                                 }}
                             >
                                 <ListItemIcon>
@@ -359,9 +362,8 @@ const Navbar = () => {
                                 <ListItemText sx={{ color: 'error.main' }}>
                                     {t('nav.adminPanel')}
                                 </ListItemText>
-                            </MenuItem>
-                        </>
-                    )}
+                            </MenuItem>,
+                        ]}
 
                     <Divider />
 
@@ -488,7 +490,7 @@ const Navbar = () => {
                     <MenuItem
                         onClick={() => {
                             setNotificationAnchor(null)
-                            navigate('/messages')
+                            router.push('/messages')
                         }}
                     >
                         <ListItemText>{t('nav.viewAllMessages')}</ListItemText>

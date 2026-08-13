@@ -1,3 +1,4 @@
+'use client'
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography, IconButton, Menu, MenuItem, Tooltip, useTheme } from '@mui/material';

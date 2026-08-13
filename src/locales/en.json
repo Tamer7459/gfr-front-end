@@ -49,6 +49,7 @@
         "passwordShort": "Password must be at least 8 characters",
         "passwordMismatch": "Passwords do not match",
         "noToken": "No token received from server",
+        "serverUnreachable": "Cannot reach the server. Make sure Laravel is running (php artisan serve) and try again.",
         "errorGeneric": "Something went wrong, please try again"
     },
     "dashboard": {

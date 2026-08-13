@@ -49,6 +49,7 @@
         "passwordShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
         "passwordMismatch": "كلمتا المرور غير متطابقتين",
         "noToken": "لم يتم استقبال توكن من السيرفر",
+        "serverUnreachable": "لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم (php artisan serve) ثم حاول مجدداً.",
         "errorGeneric": "حدث خطأ، حاول مجدداً"
     },
     "dashboard": {

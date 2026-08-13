@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API_BASE_URL =
-    process.env.REACT_APP_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
     (process.env.NODE_ENV === 'development'
         ? 'http://127.0.0.1:8000/api'
         : 'https://gfr-back-end.onrender.com/api')
@@ -16,9 +16,11 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(config => {
-    const token = localStorage.getItem('gfr_token')
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('gfr_token')
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`
+        }
     }
     return config
 })
